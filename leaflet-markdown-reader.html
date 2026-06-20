@@ -1,0 +1,1029 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#A7491F" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#E2935A" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Leaflet">
+<link id="pwa-manifest" rel="manifest">
+<title>Leaflet — Pembaca Markdown</title>
+<style>
+  :root{
+    --paper:#F6F1E6;
+    --ink:#221F1A;
+    --rule:#DED2B8;
+    --accent:#A7491F;
+    --accent-soft:#C97B4A;
+    --muted:#8C8270;
+    --card:#FFFDF8;
+    --shadow: 0 1px 2px rgba(34,31,26,.06), 0 8px 24px rgba(34,31,26,.08);
+    --font-scale: 1;
+    color-scheme: light;
+  }
+  html[data-theme="dark"]{
+    --paper:#15130F;
+    --ink:#EAE2D0;
+    --rule:#332C20;
+    --accent:#E2935A;
+    --accent-soft:#C97B4A;
+    --muted:#948C76;
+    --card:#1C1914;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: contain;
+    transition: background .25s ease, color .25s ease;
+  }
+  .serif{
+    font-family: "Iowan Old Style","Palatino Linotype","Palatino","Charter", Georgia, "Times New Roman", serif;
+  }
+  a{ color: var(--accent); }
+  button{ font-family: inherit; }
+  ::selection{ background: var(--accent-soft); color:#fff; }
+
+  /* ---------- App shell ---------- */
+  #app{ min-height:100%; display:flex; flex-direction:column; }
+
+  /* ---------- Library / empty state ---------- */
+  .library{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding: 8vh 20px 40px;
+    text-align:center;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom: 6px;
+  }
+  .brand svg{ width:30px; height:30px; color:var(--accent); flex-shrink:0; }
+  .brand h1{
+    font-size: 1.9rem;
+    letter-spacing:.01em;
+    margin:0;
+    font-weight:600;
+  }
+  .tagline{
+    color:var(--muted);
+    font-size:.95rem;
+    max-width: 320px;
+    margin: 0 0 36px;
+    line-height:1.5;
+  }
+
+  .dropzone{
+    width:100%;
+    max-width: 420px;
+    border: 1.5px dashed var(--rule);
+    border-radius: 18px;
+    padding: 34px 22px;
+    background: var(--card);
+    box-shadow: var(--shadow);
+    transition: border-color .2s ease, transform .15s ease;
+  }
+  .dropzone.drag{
+    border-color: var(--accent);
+    transform: scale(1.01);
+  }
+  .dropzone p{
+    margin: 0 0 18px;
+    color:var(--muted);
+    font-size:.9rem;
+  }
+  .btn{
+    appearance:none;
+    border:none;
+    border-radius: 999px;
+    padding: 13px 26px;
+    font-size: .95rem;
+    font-weight:600;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    justify-content:center;
+    min-height:44px;
+  }
+  .btn-primary{
+    background: var(--accent);
+    color:#fff;
+  }
+  .btn-primary:active{ background: var(--accent-soft); }
+  .btn-ghost{
+    background:transparent;
+    color: var(--ink);
+    border:1px solid var(--rule);
+  }
+  .btn-ghost:active{ background: var(--rule); }
+  .btn-block{ width:100%; }
+
+  .or-row{
+    display:flex; align-items:center; gap:10px;
+    margin: 18px 0 14px; color:var(--muted); font-size:.8rem;
+  }
+  .or-row::before,.or-row::after{ content:""; flex:1; height:1px; background:var(--rule); }
+
+  .paste-area{
+    width:100%;
+    min-height: 110px;
+    border-radius: 12px;
+    border:1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink);
+    padding: 12px 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .85rem;
+    resize: vertical;
+    margin-bottom: 10px;
+  }
+  .paste-area:focus, .btn:focus-visible, .icon-btn:focus-visible, .toc-item:focus-visible{
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .recents{
+    width:100%;
+    max-width:420px;
+    margin-top: 30px;
+    text-align:left;
+  }
+  .recents h2{
+    font-size:.72rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+    margin: 0 0 10px;
+    font-weight:600;
+  }
+  .recent-item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    width:100%;
+    background: var(--card);
+    border:1px solid var(--rule);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom:8px;
+    cursor:pointer;
+    text-align:left;
+    color:var(--ink);
+  }
+  .recent-item:active{ background: var(--rule); }
+  .recent-item .leaf{ width:18px;height:18px;color:var(--accent); flex-shrink:0; }
+  .recent-item .meta{ flex:1; min-width:0; }
+  .recent-item .name{
+    font-size:.9rem; font-weight:600;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .recent-item .sub{ font-size:.72rem; color:var(--muted); margin-top:2px; }
+  .recent-item .remove{
+    flex-shrink:0; width:30px;height:30px; border-radius:8px; border:none;
+    background:transparent; color:var(--muted); display:flex; align-items:center; justify-content:center;
+  }
+  .recent-item .remove:active{ background:var(--rule); }
+
+  input[type=file]{ display:none; }
+
+  /* ---------- Reader ---------- */
+  .reader-view{ display:none; flex:1; flex-direction:column; min-height:100%; }
+  .reader-view.active{ display:flex; }
+  .library.hidden{ display:none; }
+
+  .topbar{
+    position: sticky; top:0; z-index: 20;
+    display:flex; align-items:center; gap:6px;
+    padding: 10px 8px;
+    background: color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter: saturate(140%) blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .icon-btn{
+    width:40px;height:40px;
+    border-radius:10px;
+    border:none;
+    background:transparent;
+    color: var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .icon-btn svg{ width:20px;height:20px; }
+  .icon-btn:active{ background: var(--rule); }
+  .topbar .doc-name{
+    flex:1; min-width:0;
+    font-size:.85rem; font-weight:600;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .font-controls{ display:flex; align-items:center; border:1px solid var(--rule); border-radius:10px; overflow:hidden; }
+  .font-controls button{ width:34px;height:34px; border:none; background:transparent; color:var(--ink); font-size:.85rem; font-weight:700; }
+  .font-controls button:active{ background:var(--rule); }
+  .font-controls .divider{ width:1px; height:18px; background:var(--rule); }
+
+  .progress-track{ height:2px; background:var(--rule); }
+  .progress-fill{ height:100%; width:0%; background:var(--accent); transition: width .1s linear; }
+
+  .reader-scroll{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+
+  article.content{
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 28px 22px 90px;
+    font-size: calc(1rem * var(--font-scale));
+    line-height: 1.75;
+  }
+  .doc-meta{
+    color:var(--muted);
+    font-size:.78rem;
+    border-bottom:1px solid var(--rule);
+    padding-bottom:14px;
+    margin-bottom: 26px;
+    display:flex; gap:14px; flex-wrap:wrap;
+  }
+
+  article.content h1, article.content h2, article.content h3,
+  article.content h4, article.content h5, article.content h6{
+    font-family: "Iowan Old Style","Palatino Linotype","Charter", Georgia, serif;
+    font-weight:600;
+    line-height:1.25;
+    scroll-margin-top: 70px;
+  }
+  article.content h1{
+    font-size: calc(1.85em);
+    margin: 0 0 .55em;
+    padding-bottom:.35em;
+    border-bottom: 2px solid var(--ink);
+  }
+  article.content h2{
+    font-size: 1.45em;
+    margin: 1.4em 0 .5em;
+    padding-bottom:.3em;
+    border-bottom: 1px solid var(--rule);
+  }
+  article.content h2::before{ content:"❧ "; color:var(--accent); }
+  article.content h3{ font-size: 1.18em; margin: 1.3em 0 .4em; color: var(--accent); }
+  article.content h4,h5,h6{ font-size:1em; margin:1.2em 0 .4em; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+
+  article.content > p:first-of-type::first-letter{
+    font-family: "Iowan Old Style","Palatino Linotype","Charter", Georgia, serif;
+    float:left;
+    font-size: 3.1em;
+    line-height: .82;
+    padding: .04em .08em 0 0;
+    color: var(--accent);
+    font-weight:600;
+  }
+
+  article.content p{ margin: 0 0 1.05em; font-family: "Iowan Old Style","Palatino Linotype","Charter", Georgia, "Times New Roman", serif; }
+  article.content ul, article.content ol{ margin: 0 0 1.05em; padding-left: 1.4em; font-family: "Iowan Old Style","Palatino Linotype","Charter", Georgia, serif; }
+  article.content li{ margin-bottom: .35em; }
+  article.content li.task{ list-style:none; margin-left:-1.4em; }
+  article.content li.task input{ margin-right:.4em; transform: translateY(1px); }
+
+  article.content blockquote{
+    margin: 0 0 1.1em;
+    padding: .2em 0 .2em 1em;
+    border-left: 3px solid var(--accent);
+    color: var(--muted);
+    font-style: italic;
+  }
+  article.content blockquote p{ margin-bottom:.5em; }
+
+  article.content code{
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: var(--rule);
+    padding: .15em .4em;
+    border-radius: 5px;
+    font-size: .88em;
+  }
+  article.content pre{
+    background: var(--card);
+    border:1px solid var(--rule);
+    border-radius: 12px;
+    padding: 14px 16px;
+    overflow-x:auto;
+    margin: 0 0 1.2em;
+  }
+  article.content pre code{ background:none; padding:0; font-size:.85em; line-height:1.55; }
+
+  article.content img{ max-width:100%; height:auto; border-radius:10px; display:block; margin: .4em 0; }
+  article.content hr{ border:none; border-top:1px solid var(--rule); margin: 2em 0; }
+  article.content a{ text-decoration-color: var(--accent-soft); }
+
+  .table-wrap{ overflow-x:auto; margin: 0 0 1.2em; }
+  article.content table{ border-collapse:collapse; width:100%; font-size:.92em; }
+  article.content th, article.content td{ padding: 8px 12px; border-bottom: 1px solid var(--rule); text-align:left; }
+  article.content th{ font-weight:700; border-bottom: 2px solid var(--ink); }
+
+  /* ---------- TOC drawer ---------- */
+  .scrim{
+    position:fixed; inset:0; background: rgba(0,0,0,.4);
+    opacity:0; pointer-events:none; transition: opacity .2s ease; z-index:30;
+  }
+  .scrim.show{ opacity:1; pointer-events:auto; }
+  .toc-drawer{
+    position:fixed; top:0; left:0; bottom:0; width: min(82vw, 320px);
+    background: var(--card);
+    border-right: 1px solid var(--rule);
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    z-index:31;
+    display:flex; flex-direction:column;
+    padding-top: env(safe-area-inset-top);
+  }
+  .toc-drawer.show{ transform: translateX(0); }
+  .toc-head{ display:flex; align-items:center; justify-content:space-between; padding: 16px 16px 10px; }
+  .toc-head h2{ font-size:.95rem; margin:0; }
+  .toc-list{ overflow-y:auto; padding: 4px 8px 24px; }
+  .toc-item{
+    display:block; width:100%; text-align:left; background:none; border:none;
+    color:var(--ink); padding: 9px 10px; border-radius:8px; font-size:.88rem;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .toc-item:active{ background: var(--rule); }
+  .toc-empty{ color:var(--muted); font-size:.85rem; padding: 6px 10px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; }
+  }
+
+  /* ---------- PWA Install Banner ---------- */
+  #install-banner{
+    display:none;
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    z-index:100;
+    background: var(--card);
+    border:1px solid var(--rule);
+    border-radius: 18px;
+    box-shadow: var(--shadow), 0 8px 32px rgba(34,31,26,.18);
+    padding: 14px 18px;
+    width: calc(100% - 32px);
+    max-width: 400px;
+    align-items:center;
+    gap:12px;
+    animation: slideUp .3s ease;
+  }
+  #install-banner.show{ display:flex; }
+  @keyframes slideUp{
+    from{ transform: translateX(-50%) translateY(20px); opacity:0; }
+    to{ transform: translateX(-50%) translateY(0); opacity:1; }
+  }
+  #install-banner .ib-icon{ width:40px;height:40px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+  #install-banner .ib-icon svg{ width:22px;height:22px;color:#fff; }
+  #install-banner .ib-text{ flex:1;min-width:0; }
+  #install-banner .ib-text strong{ font-size:.9rem;display:block; }
+  #install-banner .ib-text span{ font-size:.75rem;color:var(--muted); }
+  #install-banner .ib-actions{ display:flex;gap:6px;flex-shrink:0; }
+  #install-banner .ib-install{ background:var(--accent);color:#fff;border:none;border-radius:999px;padding:8px 16px;font-size:.85rem;font-weight:600;cursor:pointer; }
+  #install-banner .ib-install:active{ background:var(--accent-soft); }
+  #install-banner .ib-dismiss{ background:transparent;border:none;color:var(--muted);padding:8px;cursor:pointer;border-radius:8px;display:flex;align-items:center; }
+  #install-banner .ib-dismiss:active{ background:var(--rule); }
+
+  @media (min-width: 720px){
+    .topbar{ padding: 12px 16px; }
+    article.content{ padding-top: 44px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===================== LIBRARY / EMPTY STATE ===================== -->
+  <section class="library" id="library">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12c4-7 10-9 18-9-1 8-3 14-9 17-3-1-6-3-7-6 3 0 6-1 8-4-3 1-6 1-9-1z"/></svg>
+      <h1 class="serif">Leaflet</h1>
+    </div>
+    <p class="tagline">Pembaca file Markdown yang ringan dan 100% berjalan offline di perangkat Anda.</p>
+
+    <div class="dropzone" id="dropzone">
+      <p>Pilih file <strong>.md</strong> dari perangkat, atau seret &amp; lepas di sini</p>
+      <button class="btn btn-primary btn-block" id="pickBtn" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+        Buka file markdown
+      </button>
+      <input type="file" id="fileInput" accept=".md,.markdown,.mdown,.mkd,.txt,text/markdown,text/plain">
+
+      <div class="or-row">atau tempel teks</div>
+      <textarea class="paste-area" id="pasteArea" placeholder="# Tempel isi markdown Anda di sini..."></textarea>
+      <button class="btn btn-ghost btn-block" id="pasteBtn" type="button">Baca teks ini</button>
+    </div>
+
+    <div class="recents" id="recentsWrap" hidden>
+      <h2>Dibuka baru-baru ini</h2>
+      <div id="recentsList"></div>
+    </div>
+  </section>
+
+  <!-- ===================== READER VIEW ===================== -->
+  <section class="reader-view" id="readerView">
+    <div class="topbar">
+      <button class="icon-btn" id="backBtn" aria-label="Kembali ke pustaka" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="icon-btn" id="tocBtn" aria-label="Daftar isi" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h16"/></svg>
+      </button>
+      <span class="doc-name" id="docName">Tanpa judul</span>
+      <div class="font-controls">
+        <button id="fontDown" aria-label="Perkecil teks" type="button">A−</button>
+        <div class="divider"></div>
+        <button id="fontUp" aria-label="Perbesar teks" type="button">A+</button>
+      </div>
+      <button class="icon-btn" id="themeBtn" aria-label="Ganti tema" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="themeIcon"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="reader-scroll" id="readerScroll">
+      <article class="content" id="content"></article>
+    </div>
+  </section>
+
+</div>
+
+<div class="scrim" id="scrim"></div>
+<nav class="toc-drawer" id="tocDrawer" aria-label="Daftar isi dokumen">
+  <div class="toc-head">
+    <h2 class="serif">Daftar Isi</h2>
+    <button class="icon-btn" id="tocClose" aria-label="Tutup" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="toc-list" id="tocList"></div>
+</nav>
+
+<!-- PWA Install Banner -->
+<div id="install-banner" role="alert" aria-live="polite">
+  <div class="ib-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12c4-7 10-9 18-9-1 8-3 14-9 17-3-1-6-3-7-6 3 0 6-1 8-4-3 1-6 1-9-1z"/></svg>
+  </div>
+  <div class="ib-text">
+    <strong>Pasang Leaflet</strong>
+    <span>Buka kapan saja, bahkan tanpa internet</span>
+  </div>
+  <div class="ib-actions">
+    <button class="ib-install" id="ib-install-btn" type="button">Pasang</button>
+    <button class="ib-dismiss" id="ib-dismiss-btn" type="button" aria-label="Tutup">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =================================================================
+     PWA — SERVICE WORKER (embedded via Blob)
+     ================================================================= */
+  const SW_CODE = `
+const CACHE = 'leaflet-v1';
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll([self.location.href.replace(/\\/[^\\/]*$/, '') + '/']))
+      .catch(() => {})
+  );
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+  ));
+  self.clients.claim();
+});
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  e.respondWith(
+    caches.match(e.request).then(cached => {
+      if (cached) return cached;
+      return fetch(e.request).then(resp => {
+        if (!resp || resp.status !== 200) return resp;
+        const clone = resp.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+        return resp;
+      }).catch(() => cached);
+    })
+  );
+});
+`;
+
+  if ('serviceWorker' in navigator) {
+    try {
+      const blob = new Blob([SW_CODE], { type: 'application/javascript' });
+      const swUrl = URL.createObjectURL(blob);
+      navigator.serviceWorker.register(swUrl, { scope: './' })
+        .catch(() => {});
+    } catch(e) {}
+  }
+
+  /* =================================================================
+     PWA — MANIFEST (embedded via data URI)
+     ================================================================= */
+  function buildManifest() {
+    // Generate inline SVG icon as data URI (leaf icon in accent color)
+    const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#A7491F"/><path d="M100 270c80-140 200-180 360-180-20 160-60 280-180 340-60-20-120-60-140-120 60 0 120-20 160-80-60 20-120 20-180-20z" fill="#fff" stroke="#fff" stroke-width="4"/></svg>`;
+    const iconDataUri = 'data:image/svg+xml,' + encodeURIComponent(svgIcon);
+
+    const manifest = {
+      name: 'Leaflet — Pembaca Markdown',
+      short_name: 'Leaflet',
+      description: 'Pembaca file Markdown offline yang ringan dan elegan',
+      start_url: './',
+      display: 'standalone',
+      background_color: '#F6F1E6',
+      theme_color: '#A7491F',
+      orientation: 'portrait-primary',
+      lang: 'id',
+      icons: [
+        { src: iconDataUri, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+      ],
+      categories: ['productivity', 'utilities'],
+      screenshots: []
+    };
+
+    const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+    const manifestUrl = URL.createObjectURL(manifestBlob);
+    const link = document.getElementById('pwa-manifest');
+    if (link) link.href = manifestUrl;
+  }
+  buildManifest();
+
+  /* =================================================================
+     PWA — INSTALL PROMPT
+     ================================================================= */
+  const banner = document.getElementById('install-banner');
+  const installBtn = document.getElementById('ib-install-btn');
+  const dismissBtn = document.getElementById('ib-dismiss-btn');
+  const DISMISS_KEY = 'leaflet:pwa-dismissed:v1';
+
+  let deferredPrompt = null;
+  const wasDismissed = () => { try { return localStorage.getItem(DISMISS_KEY); } catch(e) { return false; } };
+  const setDismissed = () => { try { localStorage.setItem(DISMISS_KEY, '1'); } catch(e) {} };
+
+  // Show banner when browser fires beforeinstallprompt
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!wasDismissed() && banner) {
+      // Small delay so it doesn't pop on page load
+      setTimeout(() => banner.classList.add('show'), 1500);
+    }
+  });
+
+  if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      banner.classList.remove('show');
+      if (outcome === 'accepted') setDismissed();
+    });
+  }
+
+  if (dismissBtn) {
+    dismissBtn.addEventListener('click', () => {
+      banner.classList.remove('show');
+      setDismissed();
+    });
+  }
+
+  // Hide banner if already installed
+  window.addEventListener('appinstalled', () => {
+    if (banner) banner.classList.remove('show');
+    setDismissed();
+  });
+
+})();
+</script>
+
+  /* =================================================================
+     MARKDOWN PARSER (self-contained, no external dependencies)
+     ================================================================= */
+  function escapeHtml(str){
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function parseInline(text){
+    const codeStash = [];
+    text = text.replace(/`([^`]+)`/g, (m, code) => {
+      codeStash.push(escapeHtml(code));
+      return '\u0000CODE' + (codeStash.length - 1) + '\u0000';
+    });
+    text = text.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,
+      (m, alt, src, title) => '<img alt="'+escapeHtml(alt)+'" src="'+escapeHtml(src)+'"'+(title?(' title="'+escapeHtml(title)+'"'):'')+'>');
+    text = text.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,
+      (m, label, href, title) => '<a href="'+escapeHtml(href)+'"'+(title?(' title="'+escapeHtml(title)+'"'):'')+' target="_blank" rel="noopener">'+label+'</a>');
+    text = text.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
+    text = text.replace(/___([^_]+)___/g, '<strong><em>$1</em></strong>');
+    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+    text = text.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+    text = text.replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?!\*)/g, '$1<em>$2</em>');
+    text = text.replace(/\b_([^_\s][^_]*?)_\b/g, '<em>$1</em>');
+    text = text.replace(/\u0000CODE(\d+)\u0000/g, (m, i) => '<code>'+codeStash[i]+'</code>');
+    return text;
+  }
+
+  function stripMd(text){
+    return text.replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/[*_`~]/g, '');
+  }
+
+  function slugify(text){
+    return text.toLowerCase().trim().replace(/[^\w\s-]/g,'').replace(/\s+/g,'-');
+  }
+
+  function parseMarkdown(src){
+    src = src.replace(/\r\n?/g, '\n');
+    const lines = src.split('\n');
+    let html = [], toc = [], i = 0, para = [], listStack = [];
+    const usedIds = Object.create(null);
+
+    function flushPara(){
+      if (para.length){ html.push('<p>'+parseInline(para.join(' '))+'</p>'); para = []; }
+    }
+
+    function closeLists(toIndent){
+      while (listStack.length && (toIndent === undefined || listStack[listStack.length-1].indent >= toIndent)){
+        const l = listStack.pop();
+        const tag = l.type === 'ol' ? 'ol' : 'ul';
+        const built = '<'+tag+'>'+l.items.join('')+'</'+tag+'>';
+        if (listStack.length){
+          const items = listStack[listStack.length-1].items;
+          const lastIdx = items.length-1;
+          if (/<\/li>\s*$/.test(items[lastIdx])){
+            items[lastIdx] = items[lastIdx].replace(/<\/li>\s*$/, built+'</li>');
+          } else {
+            items[lastIdx] += built;
+          }
+        } else {
+          html.push(built);
+        }
+      }
+    }
+
+    while (i < lines.length){
+      let line = lines[i];
+
+      const fence = line.match(/^(\s*)(```|~~~)(.*)$/);
+      if (fence){
+        flushPara(); closeLists();
+        const fenceChar = fence[2], lang = fence[3].trim();
+        let code = []; i++;
+        while (i < lines.length && !lines[i].trim().startsWith(fenceChar)){ code.push(lines[i]); i++; }
+        i++;
+        html.push('<pre><code'+(lang?(' class="lang-'+escapeHtml(lang)+'"'):'')+'>'+escapeHtml(code.join('\n'))+'</code></pre>');
+        continue;
+      }
+
+      if (/^\s*$/.test(line)){ flushPara(); closeLists(); i++; continue; }
+
+      const heading = line.match(/^(#{1,6})\s+(.*?)\s*#*\s*$/);
+      if (heading){
+        flushPara(); closeLists();
+        const level = heading[1].length, text = heading[2];
+        const cleanText = stripMd(text);
+        let id = slugify(cleanText) || 'section';
+        if (usedIds[id] !== undefined){ usedIds[id]++; id = id+'-'+usedIds[id]; } else { usedIds[id] = 0; }
+        toc.push({level, text: cleanText, id});
+        html.push('<h'+level+' id="'+id+'">'+parseInline(text)+'</h'+level+'>');
+        i++; continue;
+      }
+
+      if (/^\s*([-*_])\s*\1\s*\1[\s\1]*$/.test(line)){
+        flushPara(); closeLists(); html.push('<hr>'); i++; continue;
+      }
+
+      if (/^\s*>\s?/.test(line)){
+        flushPara(); closeLists();
+        let quoteLines = [];
+        while (i < lines.length && /^\s*>\s?/.test(lines[i])){ quoteLines.push(lines[i].replace(/^\s*>\s?/, '')); i++; }
+        html.push('<blockquote>'+parseMarkdown(quoteLines.join('\n')).html+'</blockquote>');
+        continue;
+      }
+
+      if (/^\s*\|/.test(line) && i+1 < lines.length && /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/.test(lines[i+1])){
+        flushPara(); closeLists();
+        const headerCells = line.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
+        const aligns = lines[i+1].trim().replace(/^\||\|$/g,'').split('|').map(c=>{
+          c=c.trim();
+          if (/^:-+:$/.test(c)) return 'center';
+          if (/^-+:$/.test(c)) return 'right';
+          if (/^:-+$/.test(c)) return 'left';
+          return '';
+        });
+        i += 2;
+        let rows = [];
+        while (i < lines.length && /^\s*\|/.test(lines[i])){
+          rows.push(lines[i].trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim())); i++;
+        }
+        let t = '<div class="table-wrap"><table><thead><tr>';
+        headerCells.forEach((c,idx)=>{ t += '<th'+(aligns[idx]?(' style="text-align:'+aligns[idx]+'"'):'')+'>'+parseInline(c)+'</th>'; });
+        t += '</tr></thead><tbody>';
+        rows.forEach(r=>{
+          t += '<tr>';
+          r.forEach((c,idx)=>{ t += '<td'+(aligns[idx]?(' style="text-align:'+aligns[idx]+'"'):'')+'>'+parseInline(c)+'</td>'; });
+          t += '</tr>';
+        });
+        t += '</tbody></table></div>';
+        html.push(t);
+        continue;
+      }
+
+      const ul = line.match(/^(\s*)([-*+])\s+(.*)$/);
+      const ol = line.match(/^(\s*)(\d+)[.)]\s+(.*)$/);
+      if (ul || ol){
+        flushPara();
+        const m = ul || ol;
+        const indent = m[1].length, type = ul ? 'ul' : 'ol', content = m[3];
+
+        while (listStack.length && listStack[listStack.length-1].indent > indent){
+          closeLists(listStack[listStack.length-1].indent);
+        }
+        if (!listStack.length || listStack[listStack.length-1].indent < indent){
+          listStack.push({type, indent, items: []});
+        } else if (listStack[listStack.length-1].type !== type && listStack[listStack.length-1].indent === indent){
+          closeLists(indent);
+          listStack.push({type, indent, items: []});
+        }
+
+        const checkbox = content.match(/^\[([ xX])\]\s+(.*)$/);
+        if (checkbox){
+          const checked = checkbox[1].toLowerCase() === 'x';
+          listStack[listStack.length-1].items.push('<li class="task"><input type="checkbox" disabled '+(checked?'checked':'')+'> '+parseInline(checkbox[2])+'</li>');
+        } else {
+          listStack[listStack.length-1].items.push('<li>'+parseInline(content)+'</li>');
+        }
+        i++; continue;
+      }
+
+      closeLists();
+      para.push(line.trim());
+      i++;
+    }
+
+    flushPara(); closeLists();
+    return {html: html.join('\n'), toc};
+  }
+
+  /* =================================================================
+     APP STATE & STORAGE
+     ================================================================= */
+  const STORAGE_KEY = 'leaflet:recents:v1';
+  const THEME_KEY = 'leaflet:theme:v1';
+  const FONT_KEY = 'leaflet:fontscale:v1';
+  const MAX_RECENTS = 8;
+
+  function loadRecents(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){ return []; }
+  }
+  function saveRecents(list){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
+    catch(e){
+      // storage full: drop oldest and retry once
+      if (list.length > 1){
+        list.pop();
+        try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }catch(e2){}
+      }
+    }
+  }
+  function addRecent(name, content){
+    let list = loadRecents();
+    list = list.filter(r => r.name !== name);
+    list.unshift({ id: Date.now()+'-'+Math.random().toString(36).slice(2,7), name, content, savedAt: Date.now() });
+    if (list.length > MAX_RECENTS) list = list.slice(0, MAX_RECENTS);
+    saveRecents(list);
+    renderRecents();
+  }
+  function removeRecent(id){
+    const list = loadRecents().filter(r => r.id !== id);
+    saveRecents(list);
+    renderRecents();
+  }
+
+  /* =================================================================
+     DOM REFS
+     ================================================================= */
+  const $ = id => document.getElementById(id);
+  const library = $('library');
+  const readerView = $('readerView');
+  const dropzone = $('dropzone');
+  const pickBtn = $('pickBtn');
+  const fileInput = $('fileInput');
+  const pasteArea = $('pasteArea');
+  const pasteBtn = $('pasteBtn');
+  const recentsWrap = $('recentsWrap');
+  const recentsList = $('recentsList');
+  const content = $('content');
+  const docName = $('docName');
+  const backBtn = $('backBtn');
+  const tocBtn = $('tocBtn');
+  const tocClose = $('tocClose');
+  const tocDrawer = $('tocDrawer');
+  const tocList = $('tocList');
+  const scrim = $('scrim');
+  const fontUp = $('fontUp');
+  const fontDown = $('fontDown');
+  const themeBtn = $('themeBtn');
+  const themeIcon = $('themeIcon');
+  const readerScroll = $('readerScroll');
+  const progressFill = $('progressFill');
+
+  /* =================================================================
+     RENDERING
+     ================================================================= */
+  function wordCountAndTime(raw){
+    const words = (raw.trim().match(/\S+/g) || []).length;
+    const minutes = Math.max(1, Math.round(words / 200));
+    return { words, minutes };
+  }
+
+  function openDocument(name, raw, opts){
+    opts = opts || {};
+    const { html, toc } = parseMarkdown(raw);
+    const { words, minutes } = wordCountAndTime(raw);
+
+    const meta = '<div class="doc-meta"><span>' + words.toLocaleString('id-ID') + ' kata</span><span>~' + minutes + ' menit baca</span></div>';
+    content.innerHTML = meta + html;
+
+    docName.textContent = name || 'Tanpa judul';
+    buildToc(toc);
+
+    library.classList.add('hidden');
+    readerView.classList.add('active');
+    readerScroll.scrollTop = 0;
+    updateProgress();
+
+    if (!opts.skipSave) addRecent(name || 'Tanpa judul', raw);
+  }
+
+  function buildToc(toc){
+    if (!toc.length){
+      tocList.innerHTML = '<p class="toc-empty">Dokumen ini tidak memiliki judul (heading).</p>';
+      return;
+    }
+    tocList.innerHTML = toc.map(t =>
+      '<button class="toc-item" data-target="'+t.id+'" style="padding-left:'+(10 + (t.level-1)*14)+'px; font-weight:'+(t.level<=2?600:400)+'">'+escapeHtml(t.text)+'</button>'
+    ).join('');
+  }
+
+  function closeReader(){
+    readerView.classList.remove('active');
+    library.classList.remove('hidden');
+    closeToc();
+  }
+
+  function openToc(){ tocDrawer.classList.add('show'); scrim.classList.add('show'); }
+  function closeToc(){ tocDrawer.classList.remove('show'); scrim.classList.remove('show'); }
+
+  function updateProgress(){
+    const max = readerScroll.scrollHeight - readerScroll.clientHeight;
+    const pct = max > 0 ? (readerScroll.scrollTop / max) * 100 : 0;
+    progressFill.style.width = Math.min(100, Math.max(0, pct)) + '%';
+  }
+
+  function renderRecents(){
+    const list = loadRecents();
+    if (!list.length){ recentsWrap.hidden = true; return; }
+    recentsWrap.hidden = false;
+    recentsList.innerHTML = list.map(r => {
+      const date = new Date(r.savedAt);
+      const dateStr = date.toLocaleDateString('id-ID', { day:'numeric', month:'short' });
+      const kb = Math.max(1, Math.round((r.content.length)/1024));
+      return '<div class="recent-item" data-id="'+r.id+'" role="button" tabindex="0">'+
+        '<svg class="leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12c4-7 10-9 18-9-1 8-3 14-9 17-3-1-6-3-7-6 3 0 6-1 8-4-3 1-6 1-9-1z"/></svg>'+
+        '<div class="meta"><div class="name">'+escapeHtml(r.name)+'</div><div class="sub">'+dateStr+' · '+kb+' KB</div></div>'+
+        '<button class="remove" data-remove="'+r.id+'" aria-label="Hapus" type="button">'+
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>'+
+      '</div>';
+    }).join('');
+  }
+
+  /* =================================================================
+     FILE INPUT / DRAG & DROP
+     ================================================================= */
+  function readFile(file){
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => openDocument(file.name, e.target.result);
+    reader.onerror = () => alert('Gagal membaca file. Coba lagi.');
+    reader.readAsText(file);
+  }
+
+  pickBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => {
+    if (e.target.files && e.target.files[0]) readFile(e.target.files[0]);
+    fileInput.value = '';
+  });
+
+  ['dragenter','dragover'].forEach(evt => {
+    dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('drag'); });
+  });
+  ['dragleave','drop'].forEach(evt => {
+    dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('drag'); });
+  });
+  dropzone.addEventListener('drop', e => {
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) readFile(file);
+  });
+
+  pasteBtn.addEventListener('click', () => {
+    const text = pasteArea.value;
+    if (!text.trim()){ pasteArea.focus(); return; }
+    openDocument('Catatan tempel', text);
+    pasteArea.value = '';
+  });
+
+  /* =================================================================
+     RECENTS LIST INTERACTIONS
+     ================================================================= */
+  recentsList.addEventListener('click', e => {
+    const removeId = e.target.closest('[data-remove]');
+    if (removeId){ removeRecent(removeId.getAttribute('data-remove')); return; }
+    const item = e.target.closest('.recent-item');
+    if (item){
+      const id = item.getAttribute('data-id');
+      const r = loadRecents().find(x => x.id === id);
+      if (r) openDocument(r.name, r.content, { skipSave: true });
+    }
+  });
+
+  /* =================================================================
+     READER CONTROLS
+     ================================================================= */
+  backBtn.addEventListener('click', closeReader);
+  tocBtn.addEventListener('click', openToc);
+  tocClose.addEventListener('click', closeToc);
+  scrim.addEventListener('click', closeToc);
+  tocList.addEventListener('click', e => {
+    const btn = e.target.closest('.toc-item');
+    if (!btn) return;
+    const target = document.getElementById(btn.getAttribute('data-target'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    closeToc();
+  });
+  readerScroll.addEventListener('scroll', updateProgress, { passive: true });
+
+  let fontScale = parseFloat(localStorage.getItem(FONT_KEY)) || 1;
+  function applyFontScale(){
+    document.documentElement.style.setProperty('--font-scale', fontScale.toFixed(2));
+    try{ localStorage.setItem(FONT_KEY, fontScale); }catch(e){}
+  }
+  fontUp.addEventListener('click', () => { fontScale = Math.min(1.6, fontScale + 0.1); applyFontScale(); });
+  fontDown.addEventListener('click', () => { fontScale = Math.max(0.75, fontScale - 0.1); applyFontScale(); });
+  applyFontScale();
+
+  function setTheme(mode){
+    document.documentElement.setAttribute('data-theme', mode);
+    try{ localStorage.setItem(THEME_KEY, mode); }catch(e){}
+    themeIcon.innerHTML = mode === 'dark'
+      ? '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/>'
+      : '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
+  }
+  themeBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    setTheme(current === 'dark' ? 'light' : 'dark');
+  });
+
+  /* =================================================================
+     INIT
+     ================================================================= */
+  let savedTheme = null;
+  try{ savedTheme = localStorage.getItem(THEME_KEY); }catch(e){}
+  if (savedTheme){
+    setTheme(savedTheme);
+  } else {
+    setTheme(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  }
+
+  renderRecents();
+
+})();
+</script>
+</body>
+</html>
